@@ -545,7 +545,7 @@ pub fn encode_timestampz_test() {
   let assert True = expected == out
 }
 
-pub fn encode_positive_offset_timestampz_test() {
+pub fn encode_positive_offtimestampz_test() {
   let expected_utc_int = -946_684_800_000_000
   let ts = timestamp.from_unix_seconds(1)
 
@@ -567,7 +567,7 @@ pub fn encode_positive_offset_timestampz_test() {
   let assert True = expected == out
 }
 
-pub fn encode_negative_offset_timestampz_test() {
+pub fn encode_negative_offtimestampz_test() {
   let expected_utc_int = -946_684_800_000_000
   let ts = timestamp.from_unix_seconds(1)
 
@@ -675,109 +675,109 @@ pub fn null_array_test() {
 
 fn oid() {
   types.info(25)
-  |> types.set_typesend("oidsend")
-  |> types.set_typereceive("oidrecv")
+  |> types.typesend("oidsend")
+  |> types.typereceive("oidrecv")
 }
 
 fn bool() {
   types.info(25)
-  |> types.set_typesend("boolsend")
-  |> types.set_typereceive("boolrecv")
+  |> types.typesend("boolsend")
+  |> types.typereceive("boolrecv")
 }
 
 fn int2() {
   types.info(25)
-  |> types.set_typesend("int2send")
-  |> types.set_typereceive("int2recv")
+  |> types.typesend("int2send")
+  |> types.typereceive("int2recv")
 }
 
 fn int4() {
   types.info(25)
-  |> types.set_typesend("int4send")
-  |> types.set_typereceive("int4recv")
+  |> types.typesend("int4send")
+  |> types.typereceive("int4recv")
 }
 
 fn int8() {
   types.info(25)
-  |> types.set_typesend("int8send")
-  |> types.set_typereceive("int8recv")
+  |> types.typesend("int8send")
+  |> types.typereceive("int8recv")
 }
 
 fn float4() {
   types.info(25)
-  |> types.set_typesend("float4send")
-  |> types.set_typereceive("float4recv")
+  |> types.typesend("float4send")
+  |> types.typereceive("float4recv")
 }
 
 fn float8() {
   types.info(25)
-  |> types.set_typesend("float8send")
-  |> types.set_typereceive("float8recv")
+  |> types.typesend("float8send")
+  |> types.typereceive("float8recv")
 }
 
 fn varchar() {
   types.info(25)
-  |> types.set_typesend("varcharsend")
-  |> types.set_typereceive("varcharrecv")
+  |> types.typesend("varcharsend")
+  |> types.typereceive("varcharrecv")
 }
 
 fn text() {
   types.info(25)
-  |> types.set_typesend("textsend")
-  |> types.set_typereceive("textrecv")
+  |> types.typesend("textsend")
+  |> types.typereceive("textrecv")
 }
 
 fn bytea() {
   types.info(25)
-  |> types.set_typesend("byteasend")
-  |> types.set_typereceive("bytearecv")
+  |> types.typesend("byteasend")
+  |> types.typereceive("bytearecv")
 }
 
 fn char() {
   types.info(25)
-  |> types.set_typesend("charsend")
-  |> types.set_typereceive("charrecv")
+  |> types.typesend("charsend")
+  |> types.typereceive("charrecv")
 }
 
 fn name() {
   types.info(25)
-  |> types.set_typesend("namesend")
-  |> types.set_typereceive("namerecv")
+  |> types.typesend("namesend")
+  |> types.typereceive("namerecv")
 }
 
 fn time() {
   types.info(25)
-  |> types.set_typesend("time_send")
-  |> types.set_typereceive("time_recv")
+  |> types.typesend("time_send")
+  |> types.typereceive("time_recv")
 }
 
 fn date() {
   types.info(25)
-  |> types.set_typesend("date_send")
-  |> types.set_typereceive("date_recv")
+  |> types.typesend("date_send")
+  |> types.typereceive("date_recv")
 }
 
 fn timestamp() {
   types.info(25)
-  |> types.set_typesend("timestamp_send")
-  |> types.set_typereceive("timestamp_recv")
+  |> types.typesend("timestamp_send")
+  |> types.typereceive("timestamp_recv")
 }
 
 fn timestampz() {
   types.info(25)
-  |> types.set_typesend("timestampz_send")
-  |> types.set_typereceive("timestampz_recv")
+  |> types.typesend("timestampz_send")
+  |> types.typereceive("timestampz_recv")
 }
 
 fn interval() {
   types.info(25)
-  |> types.set_typesend("interval_send")
-  |> types.set_typereceive("interval_recv")
+  |> types.typesend("interval_send")
+  |> types.typereceive("interval_recv")
 }
 
 fn array(ti: types.TypeInfo) -> types.TypeInfo {
   types.info(25)
-  |> types.set_typesend("array_send")
-  |> types.set_typereceive("array_recv")
-  |> types.set_elem_type(Some(ti))
+  |> types.typesend("array_send")
+  |> types.typereceive("array_recv")
+  |> types.elem_type(Some(ti))
 }

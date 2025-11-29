@@ -44,50 +44,47 @@ pub fn info(oid: Int) -> TypeInfo {
   )
 }
 
-pub fn set_name(ti: TypeInfo, name: String) -> TypeInfo {
+pub fn name(ti: TypeInfo, name: String) -> TypeInfo {
   TypeInfo(..ti, name:)
 }
 
-pub fn set_typesend(ti: TypeInfo, typesend: String) -> TypeInfo {
+pub fn typesend(ti: TypeInfo, typesend: String) -> TypeInfo {
   TypeInfo(..ti, typesend:)
 }
 
-pub fn set_typereceive(ti: TypeInfo, typereceive: String) -> TypeInfo {
+pub fn typereceive(ti: TypeInfo, typereceive: String) -> TypeInfo {
   TypeInfo(..ti, typereceive:)
 }
 
-pub fn set_typelen(ti: TypeInfo, typelen: Int) -> TypeInfo {
+pub fn typelen(ti: TypeInfo, typelen: Int) -> TypeInfo {
   TypeInfo(..ti, typelen:)
 }
 
-pub fn set_output(ti: TypeInfo, output: String) -> TypeInfo {
+pub fn output(ti: TypeInfo, output: String) -> TypeInfo {
   TypeInfo(..ti, output:)
 }
 
-pub fn set_input(ti: TypeInfo, input: String) -> TypeInfo {
+pub fn input(ti: TypeInfo, input: String) -> TypeInfo {
   TypeInfo(..ti, input:)
 }
 
-pub fn set_elem_oid(ti: TypeInfo, elem_oid: Int) -> TypeInfo {
+pub fn elem_oid(ti: TypeInfo, elem_oid: Int) -> TypeInfo {
   TypeInfo(..ti, elem_oid:)
 }
 
-pub fn set_base_oid(ti: TypeInfo, base_oid: Int) -> TypeInfo {
+pub fn base_oid(ti: TypeInfo, base_oid: Int) -> TypeInfo {
   TypeInfo(..ti, base_oid:)
 }
 
-pub fn set_comp_oids(ti: TypeInfo, comp_oids: List(Int)) -> TypeInfo {
+pub fn comp_oids(ti: TypeInfo, comp_oids: List(Int)) -> TypeInfo {
   TypeInfo(..ti, comp_oids:)
 }
 
-pub fn set_elem_type(ti: TypeInfo, elem_type: Option(TypeInfo)) -> TypeInfo {
+pub fn elem_type(ti: TypeInfo, elem_type: Option(TypeInfo)) -> TypeInfo {
   TypeInfo(..ti, elem_type:)
 }
 
-pub fn set_comp_types(
-  ti: TypeInfo,
-  comp_types: Option(List(TypeInfo)),
-) -> TypeInfo {
+pub fn comp_types(ti: TypeInfo, comp_types: Option(List(TypeInfo))) -> TypeInfo {
   TypeInfo(..ti, comp_types:)
 }
 

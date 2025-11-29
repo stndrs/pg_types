@@ -9,6 +9,10 @@ version = "0.1.0"
 repository = { type = "github", user = "stndrs", repo = "pg_types" }
 # links = [{ title = "Website", href = "" }]
 
+internal_modules = [
+  "pg/types/internal"
+]
+
 [dependencies]
 gleam_stdlib = ">= 0.44.0 and < 2.0.0"
 gleam_time = ">= 1.6.0 and < 2.0.0"
