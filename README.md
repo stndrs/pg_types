@@ -59,3 +59,7 @@ TODO
 gleam run   # Run the project
 gleam test  # Run the tests
 ```
+
+## Acknowledgements
+
+Much thanks to [`pg_types`](https://github.com/tsloughter/pg_types) for encoding and decoding logic.
