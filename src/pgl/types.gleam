@@ -112,7 +112,7 @@ pub fn encode(
     "time_send" -> encoder(val, ti)
     "date_send" -> encoder(val, ti)
     "timestamp_send" -> encoder(val, ti)
-    "timestampz_send" -> encoder(val, ti)
+    "timestamptz_send" -> encoder(val, ti)
     "interval_send" -> encoder(val, ti)
     _ -> Error("Unsupported type")
   }
@@ -311,7 +311,7 @@ pub fn timestamp(
   Ok(<<8:big-int-size(32), ts_int:big-int-size(64)>>)
 }
 
-pub fn timestampz(
+pub fn timestamptz(
   tsz: #(timestamp.Timestamp, duration.Duration),
   _ti: TypeInfo,
 ) -> Result(BitArray, String) {
@@ -352,7 +352,7 @@ pub fn decode(val: BitArray, ti: TypeInfo) -> Result(Dynamic, String) {
     "time_recv" -> decode_time(val)
     "date_recv" -> decode_date(val)
     "timestamp_recv" -> decode_timestamp(val)
-    "timestampz_recv" -> decode_timestamp(val)
+    "timestamptz_recv" -> decode_timestamp(val)
     "interval_recv" -> decode_interval(val)
     _ -> Error("Unsupported type")
   }

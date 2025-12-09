@@ -529,7 +529,7 @@ pub fn encode_interval_test() {
   let assert True = expected == out
 }
 
-pub fn encode_timestampz_test() {
+pub fn encode_timestamptz_test() {
   let expected_utc_int = -946_684_799_000_000
   let ts = timestamp.from_unix_seconds(1)
 
@@ -540,12 +540,12 @@ pub fn encode_timestampz_test() {
   >>
 
   let assert Ok(out) =
-    types.encode(#(ts, offset), timestampz(), with: types.timestampz)
+    types.encode(#(ts, offset), timestamptz(), with: types.timestamptz)
 
   let assert True = expected == out
 }
 
-pub fn encode_positive_offtimestampz_test() {
+pub fn encode_positive_offtimestamptz_test() {
   let expected_utc_int = -946_684_800_000_000
   let ts = timestamp.from_unix_seconds(1)
 
@@ -562,12 +562,12 @@ pub fn encode_positive_offtimestampz_test() {
   >>
 
   let assert Ok(out) =
-    types.encode(#(ts, offset), timestampz(), with: types.timestampz)
+    types.encode(#(ts, offset), timestamptz(), with: types.timestamptz)
 
   let assert True = expected == out
 }
 
-pub fn encode_negative_offtimestampz_test() {
+pub fn encode_negative_offtimestamptz_test() {
   let expected_utc_int = -946_684_800_000_000
   let ts = timestamp.from_unix_seconds(1)
 
@@ -587,7 +587,7 @@ pub fn encode_negative_offtimestampz_test() {
   >>
 
   let assert Ok(out) =
-    types.encode(#(ts, offset), timestampz(), with: types.timestampz)
+    types.encode(#(ts, offset), timestamptz(), with: types.timestamptz)
 
   let assert True = expected == out
 }
@@ -763,10 +763,10 @@ fn timestamp() {
   |> types.typereceive("timestamp_recv")
 }
 
-fn timestampz() {
+fn timestamptz() {
   types.info(1184)
-  |> types.typesend("timestampz_send")
-  |> types.typereceive("timestampz_recv")
+  |> types.typesend("timestamptz_send")
+  |> types.typereceive("timestamptz_recv")
 }
 
 fn interval() {
