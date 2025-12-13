@@ -10,6 +10,23 @@ import gleam/time/calendar
 import gleam/time/duration
 import gleam/time/timestamp
 
+pub type Offset {
+  Offset(hours: Int, minutes: Int)
+}
+
+pub fn offset(hours: Int) -> Offset {
+  Offset(hours:, minutes: 0)
+}
+
+pub fn minutes(offset: Offset, minutes: Int) -> Offset {
+  Offset(..offset, minutes:)
+}
+
+pub fn offset_to_duration(offset: Offset) -> duration.Duration {
+  duration.hours(offset.hours)
+  |> duration.add(duration.minutes(offset.minutes))
+}
+
 pub type Value {
   Null
   Bool(Bool)
@@ -20,6 +37,7 @@ pub type Value {
   Time(calendar.TimeOfDay)
   Date(calendar.Date)
   Timestamp(timestamp.Timestamp)
+  Timestamptz(timestamp.Timestamp, offset: Offset)
   Interval(duration.Duration)
   Array(List(Value))
 }
@@ -62,6 +80,10 @@ pub fn timestamp(ts: timestamp.Timestamp) -> Value {
   Timestamp(ts)
 }
 
+pub fn timestamptz(ts: timestamp.Timestamp, offset: Offset) -> Value {
+  Timestamptz(ts, offset)
+}
+
 pub fn interval(val: duration.Duration) -> Value {
   Interval(val)
 }
@@ -90,6 +112,7 @@ pub fn to_string(val: Value) -> String {
     Time(val) -> time_to_string(val)
     Date(val) -> date_to_string(val)
     Timestamp(val) -> timestamp_to_string(val)
+    Timestamptz(ts, offset) -> timestamptz_to_string(ts, offset)
     Interval(val) -> duration_to_string(val)
     Array(vals) -> array_to_string(vals)
   }
@@ -162,6 +185,12 @@ fn time_to_string(tod: calendar.TimeOfDay) -> String {
 fn timestamp_to_string(ts: timestamp.Timestamp) -> String {
   timestamp.to_rfc3339(ts, calendar.utc_offset)
   |> single_quote
+}
+
+fn timestamptz_to_string(ts: timestamp.Timestamp, offset: Offset) -> String {
+  offset_to_duration(offset)
+  |> timestamp.add(ts, _)
+  |> timestamp_to_string
 }
 
 fn duration_to_string(dur: duration.Duration) -> String {
@@ -273,6 +302,7 @@ pub fn encode(value: Value, ti: TypeInfo) -> Result(BitArray, String) {
     Time(val) -> encode_time(val, ti)
     Date(val) -> encode_date(val, ti)
     Timestamp(val) -> encode_timestamp(val, ti)
+    Timestamptz(ts, offset) -> encode_timestamptz(ts, offset, ti)
     Interval(val) -> encode_interval(val, ti)
     Array(val) -> encode_array(val, ti)
   }
@@ -481,14 +511,15 @@ fn encode_timestamp(
 }
 
 fn encode_timestamptz(
-  tsz: #(timestamp.Timestamp, duration.Duration),
+  ts: timestamp.Timestamp,
+  offset: Offset,
   _ti: TypeInfo,
 ) -> Result(BitArray, String) {
-  let #(ts, offset) = tsz
+  let offset_dur = offset_to_duration(offset)
 
   let ts_int =
     unix_seconds_before_postgres_epoch()
-    |> duration.add(offset)
+    |> duration.add(offset_dur)
     |> timestamp.add(ts, _)
     |> to_microseconds(timestamp.to_unix_seconds_and_nanoseconds)
 

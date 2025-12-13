@@ -92,6 +92,36 @@ pub fn timestamp_to_string_test() {
     value.timestamp(ts2) |> value.to_string
 }
 
+pub fn timestamptz_to_string_test() {
+  let assert Ok(ts) = timestamp.parse_rfc3339("2025-01-15T14:30:45Z")
+  let offset = value.offset(0)
+
+  let assert "'2025-01-15T14:30:45Z'" =
+    value.timestamptz(ts, offset) |> value.to_string
+
+  let assert Ok(ts2) = timestamp.parse_rfc3339("2000-12-31T23:59:59.123456789Z")
+  let offset = value.offset(0)
+
+  let assert "'2000-12-31T23:59:59.123456789Z'" =
+    value.timestamptz(ts2, offset) |> value.to_string
+}
+
+pub fn timestamptz_with_positive_offset_to_string_test() {
+  let assert Ok(ts) = timestamp.parse_rfc3339("2025-01-15T14:30:45Z")
+  let offset = value.offset(10)
+
+  let assert "'2025-01-16T00:30:45Z'" =
+    value.timestamptz(ts, offset) |> value.to_string
+}
+
+pub fn timestamptz_with_negative_offset_to_string_test() {
+  let assert Ok(ts) = timestamp.parse_rfc3339("2025-01-15T14:30:45Z")
+  let offset = value.offset(-6)
+
+  let assert "'2025-01-15T08:30:45Z'" =
+    value.timestamptz(ts, offset) |> value.to_string
+}
+
 pub fn interval_to_string_test() {
   let assert "'PT1H30M'" =
     value.interval(duration.hours(1) |> duration.add(duration.minutes(30)))
@@ -640,27 +670,29 @@ pub fn encode_interval_test() {
 pub fn encode_timestamptz_test() {
   let expected_utc_int = -946_684_799_000_000
   let ts = timestamp.from_unix_seconds(1)
+  let offset = value.offset(0)
 
-  let offset = duration.hours(0)
   let expected = <<
     8:big-int-size(32),
     expected_utc_int:big-int-size(64),
   >>
 
-  let in = timestamp.add(ts, offset) |> value.timestamp
+  let in = value.timestamptz(ts, offset)
 
   let assert Ok(out) = value.encode(in, timestamptz())
 
   let assert True = expected == out
 }
 
-pub fn encode_positive_offtimestamptz_test() {
+pub fn encode_positive_offset_timestamptz_test() {
   let expected_utc_int = -946_684_800_000_000
   let ts = timestamp.from_unix_seconds(1)
 
-  let offset = duration.hours(10)
+  let offset = value.offset(10)
+
   let ten_hours =
     offset
+    |> value.offset_to_duration
     |> timestamp.add(ts, _)
     |> to_microseconds(timestamp.to_unix_seconds_and_nanoseconds)
     |> int.add(expected_utc_int)
@@ -670,23 +702,23 @@ pub fn encode_positive_offtimestamptz_test() {
     ten_hours:big-int-size(64),
   >>
 
-  let in = timestamp.add(ts, offset) |> value.timestamp
+  let in = value.timestamptz(ts, offset)
 
   let assert Ok(out) = value.encode(in, timestamptz())
 
   let assert True = expected == out
 }
 
-pub fn encode_negative_offtimestamptz_test() {
+pub fn encode_negative_offset_timestamptz_test() {
   let expected_utc_int = -946_684_800_000_000
   let ts = timestamp.from_unix_seconds(1)
-
   let offset =
-    duration.hours(-2)
-    |> duration.add(duration.minutes(30))
+    value.offset(-2)
+    |> value.minutes(30)
 
   let minus_two_thirty =
     offset
+    |> value.offset_to_duration
     |> timestamp.add(ts, _)
     |> to_microseconds(timestamp.to_unix_seconds_and_nanoseconds)
     |> int.add(expected_utc_int)
@@ -696,7 +728,7 @@ pub fn encode_negative_offtimestamptz_test() {
     minus_two_thirty:big-int-size(64),
   >>
 
-  let in = timestamp.add(ts, offset) |> value.timestamp
+  let in = value.timestamptz(ts, offset)
 
   let assert Ok(out) = value.encode(in, timestamptz())
 
