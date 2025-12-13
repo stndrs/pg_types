@@ -7,9 +7,105 @@ import gleam/result
 import gleam/time/calendar
 import gleam/time/duration
 import gleam/time/timestamp
-import pgl/types
+import gleeunit
+import pg_value as value
 import pgl/types/internal
-import pgl/value
+
+pub fn main() -> Nil {
+  gleeunit.main()
+}
+
+// Value tests
+
+pub fn null_to_string_test() {
+  let assert "NULL" = value.null |> value.to_string
+}
+
+pub fn bool_to_string_test() {
+  let assert "TRUE" = value.bool(True) |> value.to_string
+  let assert "FALSE" = value.bool(False) |> value.to_string
+}
+
+pub fn int_to_string_test() {
+  let assert "42" = value.int(42) |> value.to_string
+  let assert "0" = value.int(0) |> value.to_string
+  let assert "-123" = value.int(-123) |> value.to_string
+}
+
+pub fn float_to_string_test() {
+  let assert "3.14" = value.float(3.14) |> value.to_string
+  let assert "0.0" = value.float(0.0) |> value.to_string
+  let assert "-2.5" = value.float(-2.5) |> value.to_string
+}
+
+pub fn text_to_string_test() {
+  let assert "'hello'" = value.text("hello") |> value.to_string
+  let assert "''" = value.text("") |> value.to_string
+  let assert "'It\\'s working'" = value.text("It's working") |> value.to_string
+  let assert "'Say \\'hello\\''" = value.text("Say 'hello'") |> value.to_string
+}
+
+pub fn bytea_to_string_test() {
+  let assert "'\\x48656C6C6F'" =
+    value.bytea(<<"Hello":utf8>>) |> value.to_string
+  let assert "'\\x'" = value.bytea(<<>>) |> value.to_string
+  let assert "'\\xDEADBEEF'" =
+    value.bytea(<<0xDE, 0xAD, 0xBE, 0xEF>>) |> value.to_string
+}
+
+pub fn time_to_string_test() {
+  let assert "'14:30:45'" =
+    value.time(calendar.TimeOfDay(14, 30, 45, 0)) |> value.to_string
+  let assert "'00:00:00'" =
+    value.time(calendar.TimeOfDay(0, 0, 0, 0)) |> value.to_string
+  let assert "'23:59:59.123'" =
+    value.time(calendar.TimeOfDay(23, 59, 59, 123_456_000))
+    |> value.to_string
+  let assert "'09:05:03'" =
+    value.time(calendar.TimeOfDay(9, 5, 3, 0)) |> value.to_string
+  let assert "'09:05:03.400'" =
+    value.time(calendar.TimeOfDay(9, 5, 3, 400_000_000))
+    |> value.to_string
+  let assert "'09:05:03.012'" =
+    value.time(calendar.TimeOfDay(9, 5, 3, 12_000_000)) |> value.to_string
+  let assert "'09:05:03.007'" =
+    value.time(calendar.TimeOfDay(9, 5, 3, 7_000_000)) |> value.to_string
+}
+
+pub fn date_to_string_test() {
+  let assert "'2025-01-15'" =
+    value.date(calendar.Date(2025, calendar.January, 15))
+    |> value.to_string
+  let assert "'1990-02-09'" =
+    value.date(calendar.Date(1990, calendar.February, 9))
+    |> value.to_string
+  let assert "'2000-12-31'" =
+    value.date(calendar.Date(2000, calendar.December, 31))
+    |> value.to_string
+}
+
+pub fn timestamp_to_string_test() {
+  let assert Ok(ts) = timestamp.parse_rfc3339("2025-01-15T14:30:45Z")
+  let assert "'2025-01-15T14:30:45Z'" = value.timestamp(ts) |> value.to_string
+
+  let assert Ok(ts2) = timestamp.parse_rfc3339("2000-12-31T23:59:59.123456789Z")
+  let assert "'2000-12-31T23:59:59.123456789Z'" =
+    value.timestamp(ts2) |> value.to_string
+}
+
+pub fn interval_to_string_test() {
+  let assert "'PT1H30M'" =
+    value.interval(duration.hours(1) |> duration.add(duration.minutes(30)))
+    |> value.to_string
+
+  let assert "'PT0S'" = value.interval(duration.seconds(0)) |> value.to_string
+
+  let assert "'PT5M30S'" =
+    value.interval(duration.minutes(5) |> duration.add(duration.seconds(30)))
+    |> value.to_string
+}
+
+// Decode tests
 
 pub fn decode_timestamp_test() {
   let ts_value =
@@ -18,7 +114,7 @@ pub fn decode_timestamp_test() {
   let in = <<ts_value:big-int-size(64)>>
   let out = dynamic.int(1_000_000)
 
-  let assert Ok(ts) = types.decode(in, timestamp())
+  let assert Ok(ts) = value.decode(in, timestamp())
   let assert True = out == ts
 }
 
@@ -26,7 +122,7 @@ pub fn decode_timestamp_pos_infinity_test() {
   let in = <<internal.int8_max:big-int-size(64)>>
   let out = dynamic.string("infinity")
 
-  let assert Ok(ts) = types.decode(in, timestamp())
+  let assert Ok(ts) = value.decode(in, timestamp())
 
   let assert True = out == ts
 }
@@ -35,7 +131,7 @@ pub fn decode_timestamp_neg_infinity_test() {
   let in = <<-internal.int8_min:big-int-size(64)>>
   let out = dynamic.string("-infinity")
 
-  let assert Ok(ts) = types.decode(in, timestamp())
+  let assert Ok(ts) = value.decode(in, timestamp())
 
   let assert True = out == ts
 }
@@ -46,7 +142,7 @@ pub fn decode_oid_test() {
   let in = <<valid:big-int-size(32)>>
   let out = dynamic.int(valid)
 
-  let assert Ok(result) = types.decode(in, oid())
+  let assert Ok(result) = value.decode(in, oid())
 
   let assert True = out == result
 }
@@ -57,7 +153,7 @@ pub fn decode_bool_test() {
   let in = <<byte:big-int-size(8)>>
   let out = dynamic.bool(expected)
 
-  let assert Ok(result) = types.decode(in, bool())
+  let assert Ok(result) = value.decode(in, bool())
 
   let assert True = out == result
 }
@@ -68,7 +164,7 @@ pub fn decode_int2_test() {
   let in = <<valid:big-int-size(16)>>
   let out = dynamic.int(valid)
 
-  let assert Ok(result) = types.decode(in, int2())
+  let assert Ok(result) = value.decode(in, int2())
 
   let assert True = out == result
 }
@@ -77,7 +173,7 @@ pub fn decode_int2_error_test() {
   let in = <<1:big-int-size(8)>>
   let out = "invalid int2"
 
-  let assert Error(msg) = types.decode(in, int2())
+  let assert Error(msg) = value.decode(in, int2())
 
   let assert True = out == msg
 }
@@ -88,7 +184,7 @@ pub fn decode_int4_test() {
   let in = <<valid:big-int-size(32)>>
   let out = dynamic.int(valid)
 
-  let assert Ok(result) = types.decode(in, int4())
+  let assert Ok(result) = value.decode(in, int4())
 
   let assert True = out == result
 }
@@ -97,7 +193,7 @@ pub fn decode_int4_error_test() {
   let in = <<1:big-int-size(16)>>
   let out = "invalid int4"
 
-  let assert Error(msg) = types.decode(in, int4())
+  let assert Error(msg) = value.decode(in, int4())
 
   let assert True = out == msg
 }
@@ -112,7 +208,7 @@ pub fn decode_int8_test() {
   let in = <<valid:big-int-size(64)>>
   let out = dynamic.int(valid)
 
-  let assert Ok(result) = types.decode(in, int8())
+  let assert Ok(result) = value.decode(in, int8())
 
   let assert True = out == result
 }
@@ -121,7 +217,7 @@ pub fn decode_int8_error_test() {
   let in = <<1:big-int-size(32)>>
   let out = "invalid int8"
 
-  let assert Error(msg) = types.decode(in, int8())
+  let assert Error(msg) = value.decode(in, int8())
 
   let assert True = out == msg
 }
@@ -132,7 +228,7 @@ pub fn decode_float4_test() {
   let in = <<valid:big-float-size(32)>>
   let out = dynamic.float(valid)
 
-  let assert Ok(result) = types.decode(in, float4())
+  let assert Ok(result) = value.decode(in, float4())
 
   let assert True = out == result
 }
@@ -141,7 +237,7 @@ pub fn decode_float4_error_test() {
   let in = <<1:big-int-size(16)>>
   let out = "invalid float4"
 
-  let assert Error(msg) = types.decode(in, float4())
+  let assert Error(msg) = value.decode(in, float4())
 
   let assert True = out == msg
 }
@@ -152,7 +248,7 @@ pub fn decode_float8_test() {
   let in = <<valid:big-float-size(64)>>
   let out = dynamic.float(valid)
 
-  let assert Ok(result) = types.decode(in, float8())
+  let assert Ok(result) = value.decode(in, float8())
 
   let assert True = out == result
 }
@@ -161,7 +257,7 @@ pub fn decode_float8_error_test() {
   let in = <<1:big-int-size(32)>>
   let out = "invalid float8"
 
-  let assert Error(msg) = types.decode(in, float8())
+  let assert Error(msg) = value.decode(in, float8())
 
   let assert True = out == msg
 }
@@ -172,7 +268,7 @@ pub fn decode_varchar_test() {
   let in = <<valid:utf8>>
   let out = dynamic.string(valid)
 
-  let assert Ok(result) = types.decode(in, varchar())
+  let assert Ok(result) = value.decode(in, varchar())
 
   let assert True = out == result
 }
@@ -181,7 +277,7 @@ pub fn decode_varchar_error_test() {
   let in = <<255, 255, 255, 255>>
   let out = "invalid varchar"
 
-  let assert Error(msg) = types.decode(in, varchar())
+  let assert Error(msg) = value.decode(in, varchar())
 
   let assert True = out == msg
 }
@@ -192,7 +288,7 @@ pub fn decode_text_test() {
   let in = <<valid:utf8>>
   let out = dynamic.string(valid)
 
-  let assert Ok(result) = types.decode(in, text())
+  let assert Ok(result) = value.decode(in, text())
 
   let assert True = out == result
 }
@@ -201,7 +297,7 @@ pub fn decode_text_error_test() {
   let in = <<255, 255, 255, 255>>
   let out = "invalid text"
 
-  let assert Error(msg) = types.decode(in, text())
+  let assert Error(msg) = value.decode(in, text())
 
   let assert True = out == msg
 }
@@ -212,7 +308,7 @@ pub fn decode_bytea_test() {
   let in = valid
   let out = dynamic.bit_array(valid)
 
-  let assert Ok(result) = types.decode(in, bytea())
+  let assert Ok(result) = value.decode(in, bytea())
 
   let assert True = out == result
 }
@@ -223,7 +319,7 @@ pub fn decode_char_test() {
   let in = <<valid:utf8>>
   let out = dynamic.string(valid)
 
-  let assert Ok(result) = types.decode(in, char())
+  let assert Ok(result) = value.decode(in, char())
 
   let assert True = out == result
 }
@@ -234,7 +330,7 @@ pub fn decode_name_test() {
   let in = <<valid:utf8>>
   let out = dynamic.string(valid)
 
-  let assert Ok(result) = types.decode(in, name())
+  let assert Ok(result) = value.decode(in, name())
 
   let assert True = out == result
 }
@@ -272,7 +368,7 @@ pub fn decode_time_test() {
 
   let in = <<microseconds:big-int-size(64)>>
 
-  let assert Ok(result) = types.decode(in, time())
+  let assert Ok(result) = value.decode(in, time())
 
   let assert True = expected == result
 }
@@ -281,7 +377,7 @@ pub fn decode_time_error_test() {
   let in = <<1:big-int-size(32)>>
   let out = "invalid time"
 
-  let assert Error(msg) = types.decode(in, time())
+  let assert Error(msg) = value.decode(in, time())
 
   let assert True = out == msg
 }
@@ -296,7 +392,7 @@ pub fn decode_date_test() {
   let in = <<days:big-int-size(32)>>
   let out = dynamic.array(list.map(expected, dynamic.int))
 
-  let assert Ok(result) = types.decode(in, date())
+  let assert Ok(result) = value.decode(in, date())
 
   let assert True = out == result
 }
@@ -305,7 +401,7 @@ pub fn decode_date_error_test() {
   let in = <<1:big-int-size(16)>>
   let out = "invalid date"
 
-  let assert Error(msg) = types.decode(in, date())
+  let assert Error(msg) = value.decode(in, date())
 
   let assert True = out == msg
 }
@@ -314,7 +410,7 @@ pub fn array_error_test() {
   let in = <<1:big-int-size(16)>>
   let out = "invalid array"
 
-  let assert Error(msg) = types.decode(in, array(int2()))
+  let assert Error(msg) = value.decode(in, array(int2()))
 
   let assert True = out == msg
 }
@@ -327,7 +423,7 @@ pub fn encode_bool_test() {
   let in = valid.0
   let expected = <<1:big-int-size(32), valid.1:big-int-size(8)>>
 
-  let assert Ok(out) = types.encode(in, bool())
+  let assert Ok(out) = value.encode(in, bool())
 
   let assert True = expected == out
 }
@@ -338,7 +434,7 @@ pub fn encode_int2_test() {
   let in = value.int(valid)
   let expected = <<2:big-int-size(32), valid:big-int-size(16)>>
 
-  let assert Ok(out) = types.encode(in, int2())
+  let assert Ok(out) = value.encode(in, int2())
 
   let assert True = expected == out
 }
@@ -349,7 +445,7 @@ pub fn encode_int2_error_test() {
   let in = value.int(invalid)
   let expected = "Out of range for int2"
 
-  let assert Error(msg) = types.encode(in, int2())
+  let assert Error(msg) = value.encode(in, int2())
 
   let assert True = expected == msg
 }
@@ -360,7 +456,7 @@ pub fn encode_int4_test() {
   let in = value.int(valid)
   let expected = <<4:big-int-size(32), valid:big-int-size(32)>>
 
-  let assert Ok(out) = types.encode(in, int4())
+  let assert Ok(out) = value.encode(in, int4())
 
   let assert True = expected == out
 }
@@ -371,7 +467,7 @@ pub fn encode_int4_error_test() {
   let in = value.int(invalid)
   let expected = "Out of range for int4"
 
-  let assert Error(msg) = types.encode(in, int4())
+  let assert Error(msg) = value.encode(in, int4())
 
   let assert True = expected == msg
 }
@@ -386,7 +482,7 @@ pub fn encode_int8_test() {
   let in = value.int(valid)
   let expected = <<8:big-int-size(32), valid:big-int-size(64)>>
 
-  let assert Ok(out) = types.encode(in, int8())
+  let assert Ok(out) = value.encode(in, int8())
 
   let assert True = expected == out
 }
@@ -400,7 +496,7 @@ pub fn encode_int8_error_test() {
   let in = value.int(invalid)
   let expected = "Out of range for int8"
 
-  let assert Error(msg) = types.encode(in, int8())
+  let assert Error(msg) = value.encode(in, int8())
 
   let assert True = expected == msg
 }
@@ -411,7 +507,7 @@ pub fn encode_float4_test() {
   let in = value.float(valid)
   let expected = <<4:big-int-size(32), valid:float-size(32)>>
 
-  let assert Ok(out) = types.encode(in, float4())
+  let assert Ok(out) = value.encode(in, float4())
 
   let assert True = expected == out
 }
@@ -422,7 +518,7 @@ pub fn encode_float8_test() {
   let in = value.float(valid)
   let expected = <<8:big-int-size(32), valid:float-size(64)>>
 
-  let assert Ok(out) = types.encode(in, float8())
+  let assert Ok(out) = value.encode(in, float8())
 
   let assert True = expected == out
 }
@@ -433,7 +529,7 @@ pub fn encode_oid_test() {
   let in = value.int(valid)
   let expected = <<4:big-int-size(32), valid:big-int-size(32)>>
 
-  let assert Ok(out) = types.encode(in, oid())
+  let assert Ok(out) = value.encode(in, oid())
 
   let assert True = expected == out
 }
@@ -444,7 +540,7 @@ pub fn encode_oid_error_test() {
   let in = value.int(invalid)
   let expected = "Out of range for oid"
 
-  let assert Error(msg) = types.encode(in, oid())
+  let assert Error(msg) = value.encode(in, oid())
 
   let assert True = expected == msg
 }
@@ -455,7 +551,7 @@ pub fn encode_varchar_test() {
   let in = value.text(valid.0)
   let expected = <<valid.1:big-int-size(32), valid.0:utf8>>
 
-  let assert Ok(out) = types.encode(in, varchar())
+  let assert Ok(out) = value.encode(in, varchar())
 
   let assert True = expected == out
 }
@@ -467,7 +563,7 @@ pub fn encode_date_test() {
 
   let expected = <<4:big-int-size(32), -10_957:big-int-size(32)>>
 
-  let assert Ok(out) = types.encode(value.date(in), date())
+  let assert Ok(out) = value.encode(value.date(in), date())
 
   let assert True = expected == out
 }
@@ -479,7 +575,7 @@ pub fn encode_time_test() {
   let in = value.time(tod)
   let expected = <<8:big-int-size(32), 79_000_000:big-int-size(64)>>
 
-  let assert Ok(out) = types.encode(in, time())
+  let assert Ok(out) = value.encode(in, time())
 
   let assert True = expected == out
 }
@@ -490,7 +586,7 @@ pub fn encode_timestamp_test() {
   let in = value.timestamp(ts)
   let expected = <<8:big-int-size(32), -946_684_799_000_000:big-int-size(64)>>
 
-  let assert Ok(out) = types.encode(in, timestamp())
+  let assert Ok(out) = value.encode(in, timestamp())
 
   let assert True = expected == out
 }
@@ -527,7 +623,7 @@ pub fn encode_interval_test() {
     0:big-int-size(32),
   >>
 
-  let assert Ok(out) = types.encode(value.interval(usecs), interval())
+  let assert Ok(out) = value.encode(value.interval(usecs), interval())
 
   let assert True = expected == out
 }
@@ -544,7 +640,7 @@ pub fn encode_timestamptz_test() {
 
   let in = timestamp.add(ts, offset) |> value.timestamp
 
-  let assert Ok(out) = types.encode(in, timestamptz())
+  let assert Ok(out) = value.encode(in, timestamptz())
 
   let assert True = expected == out
 }
@@ -567,7 +663,7 @@ pub fn encode_positive_offtimestamptz_test() {
 
   let in = timestamp.add(ts, offset) |> value.timestamp
 
-  let assert Ok(out) = types.encode(in, timestamptz())
+  let assert Ok(out) = value.encode(in, timestamptz())
 
   let assert True = expected == out
 }
@@ -593,7 +689,7 @@ pub fn encode_negative_offtimestamptz_test() {
 
   let in = timestamp.add(ts, offset) |> value.timestamp
 
-  let assert Ok(out) = types.encode(in, timestamptz())
+  let assert Ok(out) = value.encode(in, timestamptz())
 
   let assert True = expected == out
 }
@@ -605,7 +701,7 @@ pub fn empty_array_test() {
   >>
 
   let assert Ok(out) =
-    types.encode(value.array([], of: value.int), array(int2()))
+    value.encode(value.array([], of: value.int), array(int2()))
 
   let assert True = expected == out
 }
@@ -619,7 +715,7 @@ pub fn string_array_test() {
     5:big-int-size(32), "hello":utf8, 5:big-int-size(32), "world":utf8,
   >>
 
-  let assert Ok(out) = types.encode(in, array(text()))
+  let assert Ok(out) = value.encode(in, array(text()))
 
   let assert True = expected == out
 }
@@ -632,7 +728,7 @@ pub fn int_array_test() {
     4:big-int-size(32), 42:big-int-size(32),
   >>
 
-  let assert Ok(out) = types.encode(in, array(int4()))
+  let assert Ok(out) = value.encode(in, array(int4()))
 
   let assert True = expected == out
 }
@@ -646,7 +742,7 @@ pub fn null_array_test() {
     -1:big-int-size(32),
   >>
 
-  let assert Ok(out) = types.encode(in, array(int4()))
+  let assert Ok(out) = value.encode(in, array(int4()))
 
   let assert True = expected == out
 }
@@ -694,7 +790,7 @@ pub fn nested_array_test() {
     23:big-int-size(32),
   >>
 
-  let assert Ok(out) = types.encode(in, array(array(int4())))
+  let assert Ok(out) = value.encode(in, array(array(int4())))
 
   let assert True = expected == out
 }
@@ -702,110 +798,110 @@ pub fn nested_array_test() {
 // TypeInfo helpers
 
 fn oid() {
-  types.info(26)
-  |> types.typesend("oidsend")
-  |> types.typereceive("oidrecv")
+  value.info(26)
+  |> value.typesend("oidsend")
+  |> value.typereceive("oidrecv")
 }
 
 fn bool() {
-  types.info(16)
-  |> types.typesend("boolsend")
-  |> types.typereceive("boolrecv")
+  value.info(16)
+  |> value.typesend("boolsend")
+  |> value.typereceive("boolrecv")
 }
 
 fn int2() {
-  types.info(21)
-  |> types.typesend("int2send")
-  |> types.typereceive("int2recv")
+  value.info(21)
+  |> value.typesend("int2send")
+  |> value.typereceive("int2recv")
 }
 
 fn int4() {
-  types.info(23)
-  |> types.typesend("int4send")
-  |> types.typereceive("int4recv")
+  value.info(23)
+  |> value.typesend("int4send")
+  |> value.typereceive("int4recv")
 }
 
 fn int8() {
-  types.info(20)
-  |> types.typesend("int8send")
-  |> types.typereceive("int8recv")
+  value.info(20)
+  |> value.typesend("int8send")
+  |> value.typereceive("int8recv")
 }
 
 fn float4() {
-  types.info(700)
-  |> types.typesend("float4send")
-  |> types.typereceive("float4recv")
+  value.info(700)
+  |> value.typesend("float4send")
+  |> value.typereceive("float4recv")
 }
 
 fn float8() {
-  types.info(701)
-  |> types.typesend("float8send")
-  |> types.typereceive("float8recv")
+  value.info(701)
+  |> value.typesend("float8send")
+  |> value.typereceive("float8recv")
 }
 
 fn varchar() {
-  types.info(1043)
-  |> types.typesend("varcharsend")
-  |> types.typereceive("varcharrecv")
+  value.info(1043)
+  |> value.typesend("varcharsend")
+  |> value.typereceive("varcharrecv")
 }
 
 fn text() {
-  types.info(25)
-  |> types.typesend("textsend")
-  |> types.typereceive("textrecv")
+  value.info(25)
+  |> value.typesend("textsend")
+  |> value.typereceive("textrecv")
 }
 
 fn bytea() {
-  types.info(17)
-  |> types.typesend("byteasend")
-  |> types.typereceive("bytearecv")
+  value.info(17)
+  |> value.typesend("byteasend")
+  |> value.typereceive("bytearecv")
 }
 
 fn char() {
-  types.info(18)
-  |> types.typesend("charsend")
-  |> types.typereceive("charrecv")
+  value.info(18)
+  |> value.typesend("charsend")
+  |> value.typereceive("charrecv")
 }
 
 fn name() {
-  types.info(19)
-  |> types.typesend("namesend")
-  |> types.typereceive("namerecv")
+  value.info(19)
+  |> value.typesend("namesend")
+  |> value.typereceive("namerecv")
 }
 
 fn time() {
-  types.info(1083)
-  |> types.typesend("time_send")
-  |> types.typereceive("time_recv")
+  value.info(1083)
+  |> value.typesend("time_send")
+  |> value.typereceive("time_recv")
 }
 
 fn date() {
-  types.info(1082)
-  |> types.typesend("date_send")
-  |> types.typereceive("date_recv")
+  value.info(1082)
+  |> value.typesend("date_send")
+  |> value.typereceive("date_recv")
 }
 
 fn timestamp() {
-  types.info(1114)
-  |> types.typesend("timestamp_send")
-  |> types.typereceive("timestamp_recv")
+  value.info(1114)
+  |> value.typesend("timestamp_send")
+  |> value.typereceive("timestamp_recv")
 }
 
 fn timestamptz() {
-  types.info(1184)
-  |> types.typesend("timestamptz_send")
-  |> types.typereceive("timestamptz_recv")
+  value.info(1184)
+  |> value.typesend("timestamptz_send")
+  |> value.typereceive("timestamptz_recv")
 }
 
 fn interval() {
-  types.info(1186)
-  |> types.typesend("interval_send")
-  |> types.typereceive("interval_recv")
+  value.info(1186)
+  |> value.typesend("interval_send")
+  |> value.typereceive("interval_recv")
 }
 
-fn array(ti: types.TypeInfo) -> types.TypeInfo {
-  types.info(143)
-  |> types.typesend("array_send")
-  |> types.typereceive("array_recv")
-  |> types.elem_type(Some(ti))
+fn array(ti: value.TypeInfo) -> value.TypeInfo {
+  value.info(143)
+  |> value.typesend("array_send")
+  |> value.typereceive("array_recv")
+  |> value.elem_type(Some(ti))
 }
