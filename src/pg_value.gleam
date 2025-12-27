@@ -119,8 +119,8 @@ pub fn array(elements: List(a), of kind: fn(a) -> Value) -> Value {
 }
 
 /// Checks if the provided value is `option.Some` or `option.None`. If
-/// `None`, then the value returned is `value.Null`. If `Some` value is
-/// provided, then it is passed to the `inner_type` function.
+/// `None` then the value returned is `value.Null`. If `Some` value is
+/// provided then it is passed to the `inner_type` function.
 ///
 /// Example:
 ///
@@ -692,8 +692,6 @@ fn decode_array_elems(
   }
 }
 
-// Types decode functions
-
 fn decode_bool(bits: BitArray) -> Result(Dynamic, String) {
   case bits {
     <<1:big-signed-int-size(8)>> -> Ok(dynamic.bool(True))
@@ -883,8 +881,6 @@ fn unix_seconds_before_postgres_epoch() -> duration.Duration {
   |> duration.seconds
 }
 
-// constants
-
 const oid_max = 0xFFFFFFFF
 
 const int2_min = 0x8000
@@ -911,8 +907,6 @@ const postgres_gd_epoch = 730_485
 const usecs_per_sec = 1_000_000
 
 const nsecs_per_usec = 1000
-
-// FFI
 
 @external(erlang, "calendar", "gregorian_days_to_date")
 fn gregorian_days_to_date(days: Int) -> #(Int, Int, Int)

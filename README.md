@@ -15,7 +15,7 @@ pub fn main() -> Nil {
   // Decode a bit array as an int4 into a dynamic value
   let assert Ok(int_dynamic) = value.decode(encoded, int4_type_info)
 
-  // Create a list of `value.Value`s
+  // Create a list of `pg_value.Value`s
   let params = [value.int(10), value.null, value.text("text")]
 }
 ```
