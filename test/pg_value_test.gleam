@@ -212,6 +212,10 @@ pub fn decode_timestamp_test() {
 
   let assert Ok(ts) = value.decode(in, timestamp())
   assert out == ts
+
+  let assert Ok(ts) = decode.run(ts, value.timestamp_decoder())
+
+  assert timestamp.from_unix_seconds(1) == ts
 }
 
 pub fn decode_timestamp_pos_infinity_test() {
@@ -221,6 +225,8 @@ pub fn decode_timestamp_pos_infinity_test() {
   let assert Ok(ts) = value.decode(in, timestamp())
 
   assert out == ts
+
+  let assert Ok("infinity") = decode.run(ts, decode.string)
 }
 
 pub fn decode_timestamp_neg_infinity_test() {
@@ -230,6 +236,8 @@ pub fn decode_timestamp_neg_infinity_test() {
   let assert Ok(ts) = value.decode(in, timestamp())
 
   assert out == ts
+
+  let assert Ok("-infinity") = decode.run(ts, decode.string)
 }
 
 pub fn decode_oid_test() {
@@ -463,7 +471,7 @@ pub fn decode_hstore_test() {
 }
 
 pub fn decode_time_test() {
-  use #(microseconds, expected) <- list.map([
+  use #(microseconds, expected_dynamic, expected_time) <- list.map([
     #(
       79_000_000,
       dynamic.array([
@@ -472,6 +480,7 @@ pub fn decode_time_test() {
         dynamic.int(19),
         dynamic.int(0),
       ]),
+      calendar.TimeOfDay(0, 1, 19, 0),
     ),
     #(
       0,
@@ -481,6 +490,7 @@ pub fn decode_time_test() {
         dynamic.int(0),
         dynamic.int(0),
       ]),
+      calendar.TimeOfDay(0, 0, 0, 0),
     ),
     #(
       86_399_000_000,
@@ -490,6 +500,7 @@ pub fn decode_time_test() {
         dynamic.int(59),
         dynamic.int(0),
       ]),
+      calendar.TimeOfDay(23, 59, 59, 0),
     ),
   ])
 
@@ -497,7 +508,11 @@ pub fn decode_time_test() {
 
   let assert Ok(result) = value.decode(in, time())
 
-  assert expected == result
+  assert expected_dynamic == result
+
+  let assert Ok(time) = decode.run(result, value.time_decoder())
+
+  assert expected_time == time
 }
 
 pub fn decode_time_error_test() {
@@ -510,18 +525,22 @@ pub fn decode_time_error_test() {
 }
 
 pub fn decode_date_test() {
-  use #(days, expected) <- list.map([
-    #(-10_957, [1970, 1, 1]),
-    #(0, [2000, 1, 1]),
-    #(366, [2001, 1, 1]),
+  use #(days, expected_list, expected_date) <- list.map([
+    #(-10_957, [1970, 1, 1], calendar.Date(1970, calendar.January, 1)),
+    #(0, [2000, 1, 1], calendar.Date(2000, calendar.January, 1)),
+    #(366, [2001, 1, 1], calendar.Date(2001, calendar.January, 1)),
   ])
 
   let in = <<days:big-int-size(32)>>
-  let out = dynamic.array(list.map(expected, dynamic.int))
+  let out = dynamic.array(list.map(expected_list, dynamic.int))
 
   let assert Ok(result) = value.decode(in, date())
 
   assert out == result
+
+  let assert Ok(date) = decode.run(result, value.date_decoder())
+
+  assert expected_date == date
 }
 
 pub fn decode_date_error_test() {

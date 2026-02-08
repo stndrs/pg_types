@@ -8,6 +8,7 @@ import gleam/bit_array
 import gleam/bool
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
+import gleam/dynamic/decode
 import gleam/float
 import gleam/int
 import gleam/list
@@ -317,6 +318,38 @@ fn pad_zero(n: Int) -> String {
   case n < 10 {
     True -> "0" <> int.to_string(n)
     False -> int.to_string(n)
+  }
+}
+
+pub fn time_decoder() -> decode.Decoder(calendar.TimeOfDay) {
+  use hours <- decode.field(0, decode.int)
+  use minutes <- decode.field(1, decode.int)
+  use seconds <- decode.field(2, decode.int)
+  use microseconds <- decode.field(3, decode.int)
+
+  let nanoseconds = microseconds * 1000
+
+  calendar.TimeOfDay(hours:, minutes:, seconds:, nanoseconds:)
+  |> decode.success
+}
+
+pub fn timestamp_decoder() -> decode.Decoder(timestamp.Timestamp) {
+  use microseconds <- decode.map(decode.int)
+  let seconds = microseconds / 1_000_000
+  let nanoseconds = { microseconds % 1_000_000 } * 1000
+  timestamp.from_unix_seconds_and_nanoseconds(seconds, nanoseconds)
+}
+
+pub fn date_decoder() -> decode.Decoder(calendar.Date) {
+  use year <- decode.field(0, decode.int)
+  use month <- decode.field(1, decode.int)
+  use day <- decode.field(2, decode.int)
+
+  case calendar.month_from_int(month) {
+    Ok(month) -> calendar.Date(year:, month:, day:) |> decode.success
+    _ ->
+      calendar.Date(0, calendar.January, 1)
+      |> decode.failure("Date")
   }
 }
 
